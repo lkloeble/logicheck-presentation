@@ -1,0 +1,730 @@
+<!DOCTYPE HTML>
+<html lang="ro">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>LogiCheck — Motor de Audit Logistic</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg: #0e0f11;
+      --surface: #16181c;
+      --surface2: #1e2128;
+      --border: #2a2d35;
+      --accent: #e8ff47;
+      --accent2: #ff6b35;
+      --danger: #ff4444;
+      --ok: #44dd88;
+      --text: #e8eaf0;
+      --muted: #6b7280;
+      --mono: 'DM Mono', monospace;
+      --sans: 'Syne', sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      min-height: 100vh;
+      padding: 0;
+    }
+
+    /* HEADER */
+    .header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 20px 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .logo {
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+
+    .logo span {
+      color: var(--accent);
+    }
+
+    .badge {
+      font-family: var(--mono);
+      font-size: 11px;
+      background: var(--accent);
+      color: #0e0f11;
+      padding: 4px 10px;
+      border-radius: 2px;
+      font-weight: 500;
+      letter-spacing: 1px;
+    }
+
+    /* MAIN */
+    .main {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 48px 40px;
+    }
+
+    /* UPLOAD ZONE */
+    .upload-section {
+      margin-bottom: 48px;
+    }
+
+    .section-label {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--accent);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+
+    .drop-zone {
+      border: 2px dashed var(--border);
+      border-radius: 8px;
+      padding: 60px 40px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      background: var(--surface);
+      position: relative;
+    }
+
+    .drop-zone:hover, .drop-zone.dragover {
+      border-color: var(--accent);
+      background: #1a1c20;
+    }
+
+    .drop-zone input[type="file"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+      width: 100%;
+      height: 100%;
+    }
+
+    .drop-icon {
+      font-size: 40px;
+      margin-bottom: 16px;
+      display: block;
+    }
+
+    .drop-title {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .drop-sub {
+      font-family: var(--mono);
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .demo-btn {
+      margin-top: 20px;
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 12px;
+      padding: 8px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.2s;
+      letter-spacing: 1px;
+    }
+
+    .demo-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    /* RULES PANEL */
+    .rules-section {
+      margin-bottom: 48px;
+    }
+
+    .rules-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+
+    .rule-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .rule-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: var(--accent);
+    }
+
+    .rule-name {
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      letter-spacing: 0.3px;
+    }
+
+    .rule-value {
+      font-family: var(--mono);
+      font-size: 20px;
+      font-weight: 500;
+      color: var(--accent);
+      margin-bottom: 4px;
+    }
+
+    .rule-desc {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    /* RESULTS */
+    .results-section { display: none; }
+    .results-section.visible { display: block; }
+
+    /* SUMMARY CARDS */
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 40px;
+    }
+
+    .summary-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 24px;
+    }
+
+    .summary-card.highlight {
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .summary-card.highlight .summary-label,
+    .summary-card.highlight .summary-value {
+      color: #0e0f11;
+    }
+
+    .summary-label {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .summary-value {
+      font-size: 32px;
+      font-weight: 800;
+      letter-spacing: -1px;
+      line-height: 1;
+    }
+
+    .summary-sub {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 6px;
+    }
+
+    /* TABLE */
+    .table-wrapper {
+      overflow-x: auto;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    thead {
+      background: var(--surface2);
+    }
+
+    th {
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--muted);
+      padding: 14px 16px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    td {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+      font-family: var(--mono);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    tr:last-child td { border-bottom: none; }
+
+    tr:hover td { background: var(--surface2); }
+
+    .row-error td { background: rgba(255, 68, 68, 0.04); }
+    .row-ok td { background: transparent; }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 10px;
+      border-radius: 3px;
+      font-size: 10px;
+      letter-spacing: 1px;
+      font-weight: 500;
+    }
+
+    .status-error {
+      background: rgba(255, 68, 68, 0.15);
+      color: var(--danger);
+      border: 1px solid rgba(255, 68, 68, 0.3);
+    }
+
+    .status-ok {
+      background: rgba(68, 221, 136, 0.1);
+      color: var(--ok);
+      border: 1px solid rgba(68, 221, 136, 0.2);
+    }
+
+    .ecart-value {
+      font-weight: 500;
+    }
+
+    .ecart-neg { color: var(--danger); }
+    .ecart-zero { color: var(--muted); }
+
+    .rule-tag {
+      font-size: 10px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      padding: 2px 7px;
+      border-radius: 2px;
+      color: var(--muted);
+    }
+
+    .rule-tag.adr { border-color: var(--accent2); color: var(--accent2); }
+    .rule-tag.gazol { border-color: #a78bfa; color: #a78bfa; }
+    .rule-tag.vol { border-color: #38bdf8; color: #38bdf8; }
+    .rule-tag.zone { border-color: #fb923c; color: #fb923c; }
+
+    /* FOOTER NOTE */
+    .footer-note {
+      margin-top: 40px;
+      padding: 20px 24px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      border-radius: 4px;
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .footer-note strong { color: var(--text); }
+
+    /* LOADING */
+    .loading {
+      display: none;
+      text-align: center;
+      padding: 40px;
+    }
+
+    .loading.visible { display: block; }
+
+    .spinner {
+      width: 32px;
+      height: 32px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      margin: 0 auto 16px;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .fade-in {
+      animation: fadeIn 0.4s ease forwards;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 768px) {
+      .main { padding: 24px 20px; }
+      .rules-grid { grid-template-columns: repeat(2, 1fr); }
+      .summary-grid { grid-template-columns: repeat(2, 1fr); }
+      .header { padding: 16px 20px; }
+    }
+  </style>
+</head>
+<body>
+
+<header class="header">
+  <div class="logo">Logi<span>Check</span></div>
+  <div class="badge">DEMO v0.1</div>
+</header>
+
+<main class="main">
+
+  <!-- UPLOAD -->
+  <section class="upload-section">
+    <div class="section-label">// 01 — Încărcați facturile</div>
+    <div class="drop-zone" id="dropZone">
+      <input type="file" id="fileInput" accept=".csv"/>
+      <span class="drop-icon">📂</span>
+      <div class="drop-title">Trageți fișierul CSV aici</div>
+      <div class="drop-sub">Export din sistemul contabil · Format CSV · Max 10MB</div>
+      <button class="demo-btn" id="demoBtn" onclick="loadDemoData(event)">↳ Utilizați datele de demonstrație</button>
+    </div>
+  </section>
+
+  <!-- RULES -->
+  <section class="rules-section">
+    <div class="section-label">// 02 — Regulile contractuale active</div>
+    <div class="rules-grid">
+      <div class="rule-card">
+        <div class="rule-name">Index Gazol</div>
+        <div class="rule-value">1.082</div>
+        <div class="rule-desc">Coeficient contractual<br>lunar · Ian 2025</div>
+      </div>
+      <div class="rule-card">
+        <div class="rule-name">Suprataxă ADR</div>
+        <div class="rule-value">12%</div>
+        <div class="rule-desc">Mărfuri periculoase<br>clasa 8 · H2SO4</div>
+      </div>
+      <div class="rule-card">
+        <div class="rule-name">Pondere Volumetrică</div>
+        <div class="rule-value">250 kg/m³</div>
+        <div class="rule-desc">Raport contractual<br>poids réel vs volumétrique</div>
+      </div>
+      <div class="rule-card">
+        <div class="rule-name">Tarif Zonal</div>
+        <div class="rule-value">4.20 RON/km</div>
+        <div class="rule-desc">Zone 1 · &lt;300km<br>Zone 2 · &gt;300km = 3.80</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- LOADING -->
+  <div class="loading" id="loading">
+    <div class="spinner"></div>
+    <div style="font-family: var(--mono); font-size: 13px; color: var(--muted);">Analizare facturi în curs...</div>
+  </div>
+
+  <!-- RESULTS -->
+  <section class="results-section" id="results">
+
+    <div class="section-label">// 03 — Rezultatele auditului</div>
+
+    <div class="summary-grid" id="summaryGrid"></div>
+
+    <div class="table-wrapper">
+      <table id="resultsTable">
+        <thead>
+        <tr>
+          <th>Nr. Factură</th>
+          <th>Data</th>
+          <th>Transportator</th>
+          <th>Destinație</th>
+          <th>Regulă</th>
+          <th>Facturat (RON)</th>
+          <th>Datorat (RON)</th>
+          <th>Diferență (RON)</th>
+          <th>Status</th>
+        </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+
+    <div class="footer-note">
+      <strong>Metodologie:</strong> Fiecare factură este verificată față de regulile contractuale în vigoare la data transportului.
+      Ecarturile pozitive reprezintă sume facturate în plus față de contract.
+      <strong>Acest raport constituie baza dosarului de recuperare transmis transportatorului.</strong>
+    </div>
+
+  </section>
+
+</main>
+
+<script>
+
+  // ─── RULES ENGINE ────────────────────────────────────────────────────────────
+
+  const RULES = {
+    indexGazol: {
+      jan: 1.082,
+      feb: 1.091,
+      mar: 1.078
+    },
+    tauxADR: 0.12,          // 12% contractual
+    tauxADR_facture: 0.15,  // 15% appliqué par le transporteur (erreur simulée)
+    coefVolumetrique: 250,  // kg/m³
+    tarifs: {
+      // distance en km vers chaque ville depuis Bistrita
+      'Cluj-Napoca':  { km: 98,  zone: 1 },
+      'Bucuresti':    { km: 452, zone: 2 },
+      'Sibiu':        { km: 155, zone: 1 },
+      'Timisoara':    { km: 380, zone: 2 },
+      'Brasov':       { km: 210, zone: 1 },
+      'Iasi':         { km: 310, zone: 2 },
+      'Craiova':      { km: 520, zone: 2 },
+    },
+    tarifZone1: 4.20, // RON/km
+    tarifZone2: 3.80, // RON/km
+    // TransCargo applique zone1 pour tout (erreur simulée)
+    tarifApplique: { 'TransCargo SRL': 4.20, 'VeloxTrans SA': 4.20, 'NordLogistic SRL': 3.80 }
+  };
+
+  function getIndexGazol(dateStr) {
+    const d = new Date(dateStr);
+    const m = d.getMonth(); // 0=jan, 1=feb, 2=mar
+    if (m === 0) return RULES.indexGazol.jan;
+    if (m === 1) return RULES.indexGazol.feb;
+    return RULES.indexGazol.mar;
+  }
+
+  function analyzeRow(row) {
+    const dest = row.villeArrivee.trim();
+    const trajet = RULES.tarifs[dest];
+    if (!trajet) return null;
+
+    const poidsReel = parseFloat(row.poidsTotalKg);
+    const volume = parseFloat(row.volumeTotal);
+    const poidsvol = volume * RULES.coefVolumetrique;
+    const poidsFacturable = Math.max(poidsReel, poidsvol);
+
+    const tarifZoneCorrecte = trajet.zone === 1 ? RULES.tarifZone1 : RULES.tarifZone2;
+    const tarifApplique = RULES.tarifApplique[row.transporteur.trim()] || tarifZoneCorrecte;
+
+    const indexGazol = getIndexGazol(row.dateDebutTransport);
+
+    // BASE : tarif km x distance x index gazol x (poids/1000)
+    const baseCorrecte = trajet.km * tarifZoneCorrecte * indexGazol * (poidsFacturable / 1000);
+    const baseAppliquee = trajet.km * tarifApplique * indexGazol * (poidsFacturable / 1000);
+
+    let montantDu = baseCorrecte;
+    let montantFacture = parseFloat(row.montantFacture);
+    let regleViolee = null;
+
+    // Règle ADR
+    const isDanger = row.dangerProduct === 'true';
+    if (isDanger) {
+      const surchargeCorrecte = montantDu * RULES.tauxADR;
+      const surchargeAppliquee = montantDu * RULES.tauxADR_facture;
+      montantDu += surchargeCorrecte;
+      // on simule que le transporteur a facturé avec le mauvais taux ADR
+      if (row.transporteur.trim() === 'VeloxTrans SA') {
+        montantFacture = parseFloat((montantDu - surchargeCorrecte + surchargeAppliquee).toFixed(2));
+        regleViolee = 'ADR';
+      }
+    }
+
+    // Règle zone (TransCargo applique toujours zone1)
+    if (trajet.zone === 2 && row.transporteur.trim() === 'TransCargo SRL') {
+      const ecartZone = trajet.km * (RULES.tarifZone1 - RULES.tarifZone2) * indexGazol * (poidsFacturable / 1000);
+      montantFacture = parseFloat((montantDu + ecartZone).toFixed(2));
+      regleViolee = 'ZONA';
+    }
+
+    const ecart = parseFloat((montantFacture - montantDu).toFixed(2));
+
+    return {
+      numeroFacture: row.numeroFacture,
+      dateFacture: row.dateFacture,
+      transporteur: row.transporteur.trim(),
+      destination: dest,
+      montantFacture: montantFacture.toFixed(2),
+      montantDu: montantDu.toFixed(2),
+      ecart: ecart,
+      regle: regleViolee,
+      erreur: ecart > 5
+    };
+  }
+
+  // ─── CSV PARSER ──────────────────────────────────────────────────────────────
+
+  function parseCSV(text) {
+    const lines = text.trim().split('\n');
+    const headers = lines[0].split(',').map(h => h.trim());
+    return lines.slice(1).map(line => {
+      const vals = line.split(',');
+      const obj = {};
+      headers.forEach((h, i) => obj[h] = (vals[i] || '').trim());
+      return obj;
+    });
+  }
+
+  // ─── RENDER ──────────────────────────────────────────────────────────────────
+
+  function renderResults(rows) {
+    const analyzed = rows.map(analyzeRow).filter(Boolean);
+
+    const errors = analyzed.filter(r => r.erreur);
+    const totalEcart = errors.reduce((s, r) => s + r.ecart, 0);
+    const commission = totalEcart * 0.25;
+
+    // Summary
+    const summaryGrid = document.getElementById('summaryGrid');
+    summaryGrid.innerHTML = `
+    <div class="summary-card fade-in">
+      <div class="summary-label">Facturi analizate</div>
+      <div class="summary-value">${analyzed.length}</div>
+      <div class="summary-sub">fișiere procesate</div>
+    </div>
+    <div class="summary-card fade-in" style="animation-delay:0.05s">
+      <div class="summary-label">Erori detectate</div>
+      <div class="summary-value" style="color:var(--danger)">${errors.length}</div>
+      <div class="summary-sub">${((errors.length/analyzed.length)*100).toFixed(0)}% din total</div>
+    </div>
+    <div class="summary-card highlight fade-in" style="animation-delay:0.1s">
+      <div class="summary-label">Total recuperabil</div>
+      <div class="summary-value">${totalEcart.toFixed(0)} RON</div>
+      <div class="summary-sub">sume facturate în plus</div>
+    </div>
+    <div class="summary-card fade-in" style="animation-delay:0.15s">
+      <div class="summary-label">Onorariu LogiCheck</div>
+      <div class="summary-value">${commission.toFixed(0)} RON</div>
+      <div class="summary-sub">25% · doar la succes</div>
+    </div>
+  `;
+
+    // Table
+    const tbody = document.getElementById('tableBody');
+    tbody.innerHTML = analyzed.map((r, i) => {
+      const ruleTag = r.regle
+              ? `<span class="rule-tag ${r.regle.toLowerCase()}">${r.regle}</span>`
+              : `<span class="rule-tag">—</span>`;
+
+      const ecartHtml = r.ecart > 5
+              ? `<span class="ecart-value ecart-neg">+ ${r.ecart.toFixed(2)}</span>`
+              : `<span class="ecart-value ecart-zero">0.00</span>`;
+
+      const statusHtml = r.erreur
+              ? `<span class="status-badge status-error">⚠ EROARE</span>`
+              : `<span class="status-badge status-ok">✓ CONFORM</span>`;
+
+      return `
+      <tr class="${r.erreur ? 'row-error' : 'row-ok'} fade-in" data-delay="${i*0.03}">
+        <td>${r.numeroFacture}</td>
+        <td>${r.dateFacture}</td>
+        <td>${r.transporteur}</td>
+        <td>${r.destination}</td>
+        <td>${ruleTag}</td>
+        <td>${r.montantFacture}</td>
+        <td>${parseFloat(r.montantDu).toFixed(2)}</td>
+        <td>${ecartHtml}</td>
+        <td>${statusHtml}</td>
+      </tr>
+    `;
+    }).join('');
+
+    document.getElementById('loading').classList.remove('visible');
+    document.getElementById('results').classList.add('visible');
+
+    // Apply animation delays
+    document.querySelectorAll('tr[data-delay]').forEach(el => {
+      el.style.animationDelay = el.dataset.delay + 's';
+    });
+  }
+
+  // ─── FILE HANDLING ────────────────────────────────────────────────────────────
+
+  function processFile(file) {
+    document.getElementById('loading').classList.add('visible');
+    document.getElementById('results').classList.remove('visible');
+
+    const reader = new FileReader();
+    reader.onload = e => {
+      setTimeout(() => {
+        const rows = parseCSV(e.target.result);
+        renderResults(rows);
+      }, 800);
+    };
+    reader.readAsText(file);
+  }
+
+  document.getElementById('fileInput').addEventListener('change', e => {
+    if (e.target.files[0]) processFile(e.target.files[0]);
+  });
+
+  const dropZone = document.getElementById('dropZone');
+  dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+  dropZone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropZone.classList.remove('dragover');
+    if (e.dataTransfer.files[0]) processFile(e.dataTransfer.files[0]);
+  });
+
+  // ─── DEMO DATA ────────────────────────────────────────────────────────────────
+
+  function loadDemoData(e) {
+    e.stopPropagation();
+    const csv = `numeroFacture,dateFacture,dateDebutTransport,dateArriveeTransport,poidsTotalKg,volumeTotal,froidSensibilite,dangerProduct,montantFacture,transporteur,villeDepart,villeArrivee
+F-2025-001,2025-01-08,2025-01-06,2025-01-07,1200,4.2,false,false,1850,TransCargo SRL,Bistrita,Cluj-Napoca
+F-2025-002,2025-01-10,2025-01-09,2025-01-10,3400,8.1,false,true,4200,TransCargo SRL,Bistrita,Bucuresti
+F-2025-003,2025-01-15,2025-01-13,2025-01-15,800,6.5,true,false,2100,VeloxTrans SA,Bistrita,Sibiu
+F-2025-004,2025-01-18,2025-01-17,2025-01-18,5200,12.3,false,false,3900,TransCargo SRL,Bistrita,Timisoara
+F-2025-005,2025-01-22,2025-01-21,2025-01-22,950,3.8,false,true,2850,VeloxTrans SA,Bistrita,Brasov
+F-2025-006,2025-01-25,2025-01-24,2025-01-25,2100,9.4,true,false,3100,NordLogistic SRL,Bistrita,Iasi
+F-2025-007,2025-01-29,2025-01-28,2025-01-29,4800,11.2,false,false,4500,TransCargo SRL,Bistrita,Craiova
+F-2025-008,2025-02-03,2025-02-02,2025-02-03,1500,5.6,false,true,3200,VeloxTrans SA,Bistrita,Bucuresti
+F-2025-009,2025-02-07,2025-02-06,2025-02-07,680,2.9,true,false,1600,NordLogistic SRL,Bistrita,Cluj-Napoca
+F-2025-010,2025-02-11,2025-02-10,2025-02-11,3900,10.1,false,false,4100,TransCargo SRL,Bistrita,Timisoara
+F-2025-011,2025-02-14,2025-02-13,2025-02-14,2600,7.3,false,true,5100,VeloxTrans SA,Bistrita,Bucuresti
+F-2025-012,2025-02-19,2025-02-18,2025-02-19,1100,4.8,true,false,2400,NordLogistic SRL,Bistrita,Sibiu
+F-2025-013,2025-02-22,2025-02-21,2025-02-22,4200,9.7,false,false,3800,TransCargo SRL,Bistrita,Brasov
+F-2025-014,2025-02-26,2025-02-25,2025-02-26,750,3.1,false,true,2950,VeloxTrans SA,Bistrita,Iasi
+F-2025-015,2025-03-04,2025-03-03,2025-03-04,5800,13.5,false,false,5200,NordLogistic SRL,Bistrita,Craiova
+F-2025-016,2025-03-07,2025-03-06,2025-03-07,1800,6.2,true,false,2700,TransCargo SRL,Bistrita,Cluj-Napoca
+F-2025-017,2025-03-12,2025-03-11,2025-03-12,3100,8.8,false,true,4800,VeloxTrans SA,Bistrita,Bucuresti
+F-2025-018,2025-03-17,2025-03-16,2025-03-17,920,4.1,false,false,1750,NordLogistic SRL,Bistrita,Sibiu
+F-2025-019,2025-03-21,2025-03-20,2025-03-21,4600,10.9,false,true,6200,TransCargo SRL,Bistrita,Timisoara
+F-2025-020,2025-03-26,2025-03-25,2025-03-26,1350,5.3,true,false,2300,VeloxTrans SA,Bistrita,Brasov`;
+
+    document.getElementById('loading').classList.add('visible');
+    document.getElementById('results').classList.remove('visible');
+    setTimeout(() => {
+      const rows = parseCSV(csv);
+      renderResults(rows);
+    }, 900);
+  }
+</script>
+</body>
+</html>
